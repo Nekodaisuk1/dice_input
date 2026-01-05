@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <title>番号入力</title>
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700&display=swap");
+      @font-face {
+        font-family: "Teachers";
+        src: url("assets/fonts/Webfonts/Teachers-Regular.woff2") format("woff2"),
+          url("assets/fonts/Webfonts/Teachers-Regular.woff") format("woff");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Teachers";
+        src: url("assets/fonts/Webfonts/Teachers-Bold.woff2") format("woff2"),
+          url("assets/fonts/Webfonts/Teachers-Bold.woff") format("woff");
+        font-weight: 700;
+        font-style: normal;
+      }
+
+      :root {
+        --ink: #0c0c0c;
+        --paper: #ffffff;
+        --shadow: #0c0c0c;
+        --card-radius: 22px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Teachers", "M PLUS Rounded 1c", "Helvetica Neue",
+          "Segoe UI", sans-serif;
+        min-height: 100vh;
+        cursor: url("assets/imgs/cursor/1.png") 16 16, auto;
+      }
+
+
+      .page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 32px 24px 32px;
+        position: relative;
+      }
+
+      .top-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        margin-bottom: 16px;
+      }
+
+      .stats {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 16px;
+        line-height: 1.4;
+        margin-right: auto;
+      }
+
+      .main-area {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 16px;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 8px;
+        padding-bottom: 4px;
+      }
+
+      .app-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin: 0 0 4px;
+      }
+
+      .app-subtitle {
+        font-size: 15px;
+        margin: 0;
+        color: #555;
+      }
+
+      .app-main {
+        justify-content: center;
+      }
+
+      .buttons-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        width: min(600px, 100%);
+      }
+
+      .num-btn {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 3px solid var(--ink);
+        border-radius: var(--card-radius);
+        background: var(--paper);
+        box-shadow: 4px 7px 0 var(--shadow);
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        transition: transform 120ms ease, box-shadow 120ms ease;
+      }
+
+      .num-btn:focus-visible,
+      .num-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 4px 11px 0 var(--shadow);
+      }
+
+      .num-btn:active {
+        transform: translateY(0);
+        box-shadow: 2px 6px 0 var(--shadow);
+      }
+
+      #status,
+      .comment-status {
+        margin-top: 6px;
+        font-size: 13px;
+        color: #2f2f2f;
+        min-height: 16px;
+      }
+
+      @media (max-width: 640px) {
+        .page {
+          padding: 24px 16px 24px;
+        }
+
+        .buttons-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+          width: 100%;
+        }
+
+        .num-btn {
+          font-size: 32px;
+          aspect-ratio: 1 / 1;
+        }
+      }
+
+      .select-row {
+        margin-bottom: 16px;
+      }
+
+      .select-label {
+        font-size: 14px;
+        margin-bottom: 4px;
+        display: block;
+        color: #555;
+      }
+
+      .select-wrap {
+        position: relative;
+        margin-bottom: 8px;
+      }
+
+      .select-control {
+        width: 100%;
+        padding: 10px 40px 10px 12px;
+        font-size: 16px;
+        font-family: inherit;
+        border: 3px solid var(--ink);
+        border-radius: var(--card-radius);
+        background: var(--paper);
+        box-shadow: 4px 7px 0 var(--shadow);
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+      }
+
+      .select-wrap::after {
+        content: "▼";
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        pointer-events: none;
+        color: var(--ink);
+      }
+
+    </style>
+
+    <script>
+  // ▼ 初期ロードでシート一覧を取得
+  window.addEventListener("load", () => {
+    google.script.run
+      .withSuccessHandler((names) => {
+        const sheetSel = document.getElementById("sheetSelect");
+        sheetSel.innerHTML = "";
+        names.forEach((n) => {
+          sheetSel.insertAdjacentHTML("beforeend", `<option>${n}</option>`);
+        });
+        loadColumns();
+      })
+      .getSheetNames();
+  });
+
+  // ▼ シート選択時に列一覧を取得
+  function loadColumns() {
+    const sheet = document.getElementById("sheetSelect").value;
+    if (!sheet) return;
+
+    google.script.run
+      .withSuccessHandler((cols) => {
+        const colSel = document.getElementById("colSelect");
+        colSel.innerHTML = "";
+        cols.forEach((c) => {
+          colSel.insertAdjacentHTML(
+            "beforeend",
+            `<option value="${c.index}">${c.name}</option>`
+          );
+        });
+      })
+      .getColumns(sheet);
+  }
+
+  function sendNumber(num) {
+    const sheet = document.getElementById("sheetSelect").value;
+    const col = document.getElementById("colSelect").value;
+
+    if (!sheet || !col) {
+      setStatus("シートと列を選択してください。", true);
+      return;
+    }
+
+    setStatus(
+      `「${sheet}」の列${col} に ${num} を送信しています…`,
+      false
+    );
+
+    google.script.run
+      .withSuccessHandler(function (msg) {
+        setStatus(msg, false);
+      })
+      .withFailureHandler(function (err) {
+        setStatus(
+          "エラー: " + (err && err.message ? err.message : err),
+          true
+        );
+      })
+      .appendNumber(num, sheet, col);
+  }
+
+  function setStatus(text, isError) {
+    var el = document.getElementById("status");
+    el.textContent = text || "";
+    el.style.color = isError ? "#d32f2f" : "#2f2f2f";
+  }
+  </script>
+
+  </head>
+
+  <body>
+    <div class="page">
+      <div class="top-row">
+        <div class="stats">
+          <h1 class="app-title">番号入力</h1>
+          <p class="app-subtitle">ボタンをタップすると記録されます。</p>
+        </div>
+      </div>
+
+      <div class="select-row">
+        <label class="select-label">シート：</label>
+        <div class="select-wrap">
+          <select
+            id="sheetSelect"
+            class="select-control"
+            onchange="loadColumns()"
+          ></select>
+        </div>
+
+        <label class="select-label">列：</label>
+        <div class="select-wrap">
+          <select
+            id="colSelect"
+            class="select-control"
+            onchange="applyTarget && applyTarget()"
+          ></select>
+        </div>
+      </div>
+
+
+      <div class="main-area app-main">
+        <div class="buttons-grid">
+          <button class="num-btn" onclick="sendNumber(1)">1</button>
+          <button class="num-btn" onclick="sendNumber(2)">2</button>
+          <button class="num-btn" onclick="sendNumber(3)">3</button>
+          <button class="num-btn" onclick="sendNumber(4)">4</button>
+          <button class="num-btn" onclick="sendNumber(5)">5</button>
+          <button class="num-btn" onclick="sendNumber(6)">6</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div id="status" class="comment-status"></div>
+      </div>
+    </div>
+  </body>
+</html>
